@@ -934,6 +934,49 @@ button, .seg__btn, .swatch, .chip, .check, .theme-btn, .mtab { touch-action: man
 .cover-palette__label { width: 100%; font-size: 11.5px; color: var(--muted); }
 .panel__header .install { margin-left: auto; flex: none; }
 .panel__header .install:not([hidden]) + .eq { margin-left: 12px; }
+
+/* =========================================================
+   UI POLISH v2: depth, motion, micro-interactions
+   ========================================================= */
+:root { --ease: cubic-bezier(.22,1,.36,1); --glass: rgba(255,255,255,.04); }
+.panel__body > * { animation: slideUp .55s var(--ease) both; }
+.panel__body > *:nth-child(2) { animation-delay: .05s; } .panel__body > *:nth-child(3) { animation-delay: .1s; } .panel__body > *:nth-child(4) { animation-delay: .15s; }
+@keyframes slideUp { from { opacity:0; transform:translateY(14px); } }
+.section { border-radius:16px; transition:background .3s var(--ease), box-shadow .3s var(--ease); }
+.panel { box-shadow: 8px 0 40px rgba(0,0,0,.35); }
+.panel__header h1 { background:linear-gradient(90deg,#fff,#b9f5cf 70%); -webkit-background-clip:text; background-clip:text; color:transparent; }
+input[type=text], input[type=url], textarea, select { transition:border-color .2s, box-shadow .25s var(--ease), background .2s, transform .2s; }
+input[type=text]:focus, input[type=url]:focus, textarea:focus, select:focus { box-shadow:0 0 0 3px rgba(29,185,84,.28), 0 8px 24px rgba(0,0,0,.35); transform:translateY(-1px); }
+.btn { position:relative; overflow:hidden; transition:transform .25s var(--ease), box-shadow .3s var(--ease), background .2s, filter .2s; }
+.btn:hover { transform:translateY(-2px); box-shadow:0 10px 28px rgba(29,185,84,.28); }
+.btn--ghost:hover { box-shadow:0 10px 24px rgba(0,0,0,.4); }
+.btn:active { transform:translateY(0) scale(.97); }
+.btn--primary::before { content:''; position:absolute; inset:0; background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.35) 50%,transparent 70%); transform:translateX(-120%); transition:transform .7s var(--ease); }
+.btn--primary:hover::before { transform:translateX(120%); }
+.rip { position:absolute; border-radius:50%; background:rgba(255,255,255,.35); transform:scale(0); animation:rip .6s var(--ease) forwards; pointer-events:none; }
+@keyframes rip { to { transform:scale(1); opacity:0; } }
+.theme-btn { transition:transform .35s var(--spring), border-color .25s, background .25s, box-shadow .3s, color .2s; }
+.theme-btn.active { animation:selPop .45s var(--spring); }
+@keyframes selPop { 0% { transform:scale(.92); } 60% { transform:scale(1.06); } 100% { transform:scale(1); } }
+.theme-grid .theme-btn { animation:tIn .5s var(--ease) both; animation-delay:calc(var(--i,0) * 28ms); }
+@keyframes tIn { from { opacity:0; transform:translateY(10px) scale(.94); } }
+.card-3d { will-change:transform; }
+.card-3d.swap { animation:cardSwap .55s var(--ease); }
+@keyframes cardSwap { 0% { transform:scale(.94) rotateX(6deg); opacity:.55; filter:blur(4px); } 100% { transform:none; opacity:1; filter:none; } }
+.scene:not(.dragging) .card-3d { animation:floaty 7s ease-in-out infinite; }
+.scene.dragging .card-3d, .card-3d.swap { animation-name:none; }
+.card-3d.swap { animation:cardSwap .55s var(--ease); }
+@keyframes floaty { 50% { translate:0 -6px; } }
+.scene::after { content:''; position:absolute; left:12%; right:12%; bottom:-4%; height:7%; background:radial-gradient(ellipse at center, rgba(0,0,0,.45), transparent 70%); filter:blur(10px); pointer-events:none; z-index:-1; animation:shadowPulse 7s ease-in-out infinite; }
+@keyframes shadowPulse { 50% { transform:scaleX(.9); opacity:.7; } }
+.toast { transition:transform .5s var(--spring), opacity .3s; backdrop-filter:blur(14px); }
+.xm__sheet, .lm__sheet { animation:sheetIn .5s var(--spring); }
+@keyframes sheetIn { from { transform:translateY(40px) scale(.97); opacity:0; } }
+.mtab { transition:color .25s, transform .2s var(--ease); } .mtab:active { transform:scale(.94); }
+.result { transition:background .2s, transform .25s var(--spring), border-color .2s; } .result:hover { transform:translateX(3px); }
+input[type=range] { transition:filter .2s; } input[type=range]:hover { filter:drop-shadow(0 0 6px rgba(29,185,84,.5)); }
+.swatch { transition:transform .3s var(--spring), box-shadow .25s; } .swatch:hover { transform:scale(1.18); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; } }
 </style>
 </head>
 
@@ -3039,6 +3082,56 @@ function paintCardBody(g, theme, bg, P, fullBleed) {
   }
 }
 
+
+/** THEME FINISH: extra material detail layered on every theme (grain, light, edge, ornaments). Drawn on the card face before cover/text. */
+function themeFinish(g, theme, bg, P, fullBleed) {
+  const W = CANVAS_W, H = CANVAS_H, R = themeRadius(theme), m = Math.min(W, H);
+  const clipCard = () => { g.save(); roundedRect(g, 0, 0, W, H, R); g.clip(); };
+  const grain = (a) => { g.fillStyle = tilePattern('grain' + a, 96, (c, n) => { for (let i = 0; i < 520; i++) { c.fillStyle = Math.random() < 0.5 ? `rgba(255,255,255,${a})` : `rgba(0,0,0,${a})`; c.fillRect(Math.random() * n, Math.random() * n, 1.4, 1.4); } }); g.fillRect(0, 0, W, H); };
+  const topLight = (a, h = 0.55) => { const l = g.createLinearGradient(0, 0, 0, H * h); l.addColorStop(0, `rgba(255,255,255,${a})`); l.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = l; g.fillRect(0, 0, W, H); };
+  const vignette = (a) => { const v = g.createRadialGradient(W / 2, H / 2, m * 0.35, W / 2, H / 2, Math.max(W, H) * 0.78); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, `rgba(0,0,0,${a})`); g.fillStyle = v; g.fillRect(0, 0, W, H); };
+  switch (theme) {
+    case 'classic': clipCard(); topLight(0.10); grain(0.035); g.restore(); break;
+    case 'brutalism': {                                  // hazard hatch strip + inner rule
+      g.save(); g.beginPath(); g.rect(10, H - 36, W - 20, 26); g.clip(); g.strokeStyle = '#000'; g.lineWidth = 6;
+      for (let x = -40; x < W + 40; x += 22) { g.beginPath(); g.moveTo(x, H - 8); g.lineTo(x + 26, H - 40); g.stroke(); } g.restore();
+      g.strokeStyle = '#000'; g.lineWidth = 3; g.strokeRect(20, 20, W - 40, H - 40); break; }
+    case 'cyberpunk': {                                  // grid, scanlines, corner brackets, vignette
+      clipCard();
+      g.strokeStyle = rgba(P.neon, 0.07); g.lineWidth = 1; for (let x = 0; x < W; x += 64) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); } for (let y = 0; y < H; y += 64) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
+      g.fillStyle = 'rgba(0,0,0,0.22)'; for (let y = 0; y < H; y += 6) g.fillRect(0, y, W, 2);
+      vignette(0.45); g.restore();
+      g.save(); setShadow(g, P.neon, 12); g.strokeStyle = P.neon; g.lineWidth = 5; g.lineCap = 'square';
+      for (const [x, y, sx, sy] of [[30, 30, 1, 1], [W - 30, 30, -1, 1], [30, H - 30, 1, -1], [W - 30, H - 30, -1, -1]]) { g.beginPath(); g.moveTo(x, y + sy * 46); g.lineTo(x, y); g.lineTo(x + sx * 46, y); g.stroke(); }
+      g.restore(); break; }
+    case 'glass': clipCard(); topLight(0.14, 0.4); grain(0.03);
+      g.fillStyle = 'rgba(255,255,255,0.18)'; g.beginPath(); g.ellipse(W * 0.5, -H * 0.38, W * 0.9, H * 0.55, 0, 0, 7); g.fill(); g.restore(); break;
+    case 'clay': clipCard(); grain(0.03);
+      g.fillStyle = 'rgba(255,255,255,0.55)'; g.beginPath(); g.ellipse(W * 0.2, H * 0.1, m * 0.1, m * 0.045, -0.5, 0, 7); g.fill(); g.restore(); break;
+    case 'neumorphism': clipCard(); grain(0.025); g.restore(); break;
+    case 'vinyl': clipCard(); topLight(0.07); g.restore(); break;
+    case 'ticket': clipCard(); grain(0.05); g.restore(); break;
+    case 'polaroid': clipCard(); grain(0.04); vignette(0.07); g.restore(); break;
+    case 'y2k': clipCard(); g.strokeStyle = 'rgba(255,255,255,0.18)'; g.lineWidth = 2;
+      for (let i = -H; i < W; i += 36) { g.beginPath(); g.moveTo(i, H); g.lineTo(i + H, 0); g.stroke(); } g.restore(); break;
+    case 'aurora': clipCard(); grain(0.045); vignette(0.35);
+      g.fillStyle = tilePattern('stars', 160, (c, n) => { for (let i = 0; i < 14; i++) { c.fillStyle = `rgba(255,255,255,${0.25 + Math.random() * 0.5})`; c.beginPath(); c.arc(Math.random() * n, Math.random() * n, Math.random() * 1.4 + 0.4, 0, 7); c.fill(); } }); g.fillRect(0, 0, W, H); g.restore(); break;
+    case 'pixel': g.fillStyle = 'rgba(255,255,255,0.35)'; g.fillRect(8, 48, W - 16, 4); g.fillStyle = 'rgba(0,0,0,0.18)'; g.fillRect(8, H - 14, W - 16, 6); break;
+    case 'notebook': clipCard(); grain(0.04); vignette(0.08); g.restore(); break;
+    case 'newspaper': clipCard(); grain(0.06); vignette(0.14); g.restore(); break;
+    case 'sticker': clipCard(); g.strokeStyle = 'rgba(255,255,255,0.35)'; g.lineWidth = 3; roundedRect(g, 10, 10, W - 20, H - 20, Math.max(6, R - 10)); g.stroke(); g.restore(); break;
+    case 'holo': clipCard(); g.globalCompositeOperation = 'overlay'; const hg = g.createLinearGradient(0, 0, W, H); ['#ff4fd8', '#4fe3ff', '#fff36b', '#6bff9e', '#ff4fd8'].forEach((c, i, a) => hg.addColorStop(i / (a.length - 1), c));
+      g.fillStyle = hg; g.globalAlpha = 0.35; g.fillRect(0, 0, W, H); g.restore(); break;
+    case 'wrapped': clipCard(); grain(0.035); topLight(0.1); g.restore(); break;
+    case 'cassette': clipCard(); grain(0.04); topLight(0.08); g.restore(); break;
+    case 'receipt': g.save(); g.globalAlpha = 1; g.fillStyle = tilePattern('paperfx', 96, (c, n) => { for (let i = 0; i < 380; i++) { c.fillStyle = `rgba(0,0,0,${0.02 + Math.random() * 0.03})`; c.fillRect(Math.random() * n, Math.random() * n, 1.3, 1.3); } }); g.fillRect(0, 12, W, H - 24); g.restore(); break;
+    case 'gameboy': clipCard(); topLight(0.08); g.restore(); break;
+    case 'stained': clipCard(); vignette(0.35); g.restore(); break;
+    case 'neon': clipCard(); vignette(0.4); grain(0.03); g.restore(); break;
+    case 'comic': clipCard(); grain(0.03); g.restore(); break;
+  }
+}
+
 /**
  * Draw the whole card onto any CANVAS_W x CANVAS_H 2D context.
  * @param {{fullBleed?: boolean}} opts  fullBleed = fill the whole canvas (no transparent corners)
@@ -3057,6 +3150,7 @@ function renderCard(g, { fullBleed = false, flat = false } = {}) {
   g.translate(geo.x, geo.y);
   g.scale(geo.s, geo.s);                              // content is always laid out in 1024x1024 / 1280x720 space
   paintCardBody(g, theme, bg, P, fullBleed && state.bgStyle === 'none');   // an inset card keeps its own rounded shape
+  themeFinish(g, theme, bg, P, fullBleed);
   if (!state.hide.cover) drawCover(g, P);
   if (!(state.hide.title && state.hide.artist)) drawHeader(g, P);
   const info = drawLyrics(g, P);
@@ -5311,5 +5405,28 @@ $('hideBox').addEventListener('change', (e) => {
 }
 })();
 </script>
+<script>
+/* UI polish v2: ripple, staggered theme entrance, card swap animation, pointer parallax */
+(() => {
+  const $ = (id) => document.getElementById(id), reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.addEventListener('pointerdown', (e) => {
+    const b = e.target.closest('.btn'); if (!b || reduce) return;
+    const r = b.getBoundingClientRect(), d = Math.max(r.width, r.height) * 2, s = document.createElement('span');
+    s.className = 'rip'; s.style.cssText = `width:${d}px;height:${d}px;left:${e.clientX - r.left - d / 2}px;top:${e.clientY - r.top - d / 2}px`;
+    b.appendChild(s); setTimeout(() => s.remove(), 650);
+  }, { passive: true });
+  const grid = $('themeGrid');
+  if (grid) {
+    const idx = () => grid.querySelectorAll('.theme-btn').forEach((b, i) => b.style.setProperty('--i', i));
+    idx(); new MutationObserver(idx).observe(grid, { childList: true });
+    grid.addEventListener('click', (e) => {
+      if (!e.target.closest('.theme-btn') || reduce) return;
+      const c = document.querySelector('.card-3d'); if (!c) return;
+      c.classList.remove('swap'); void c.offsetWidth; c.classList.add('swap'); setTimeout(() => c.classList.remove('swap'), 600);
+    });
+  }
+})();
+</script>
+
 </body>
 </html>
