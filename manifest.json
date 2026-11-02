@@ -1,14 +1,14 @@
 {
   "name": "Spotify Lyric Card Generator",
   "short_name": "Lyric Cards",
-  "description": "Create Spotify-style lyric cards and export them as flat or 3D images.",
+  "description": "Create Spotify-style lyric cards and download them as flat or 3D images. Works offline.",
+  "id": "./spotifylyric.html",
   "start_url": "./spotifylyric.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "theme_color": "#121212",
   "background_color": "#121212",
-  "categories": ["music", "photo"],
+  "theme_color": "#121212",
   "icons": [
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
