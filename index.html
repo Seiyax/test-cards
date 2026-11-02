@@ -7,7 +7,8 @@
 <meta name="theme-color" content="#121212">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Lyric Cards">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -755,6 +756,13 @@ input[type="range"]:disabled { opacity: .4; cursor: not-allowed; }
   .toast { bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
 }
 
+/* Mobile: search results flow in the page instead of floating, so the sticky tab bar and Export bar can never cover them */
+@media (max-width: 900px) {
+  #searchForm .search-row { flex-wrap: wrap; }
+  .search-row .results { position: static; flex: 0 0 100%; order: 3; width: 100%; max-height: none; overflow: visible; margin-top: 4px;
+                         box-shadow: none; background: rgba(255,255,255,.03); animation: none; }
+  .search-row .result { min-height: 56px; scroll-margin: 140px 0 100px; }
+}
 @media (max-width: 900px) and (min-width: 601px) { :root { --stage-h: clamp(320px, 44vh, 520px); } }
 @media (max-width: 600px) {
   :root { --stage-h: clamp(220px, 38vh, 340px); }
@@ -1162,7 +1170,7 @@ button, .seg__btn, .swatch, .chip, .check, .theme-btn, .mtab { touch-action: man
           </select></div>
         <div class="field"><label for="lyricFont">Lyric font</label>
           <select id="lyricFont" class="select">
-            <option value="auto">Theme default</option><option value="poppins">Poppins</option><option value="serif">Serif</option><option value="hand">Handwritten</option><option value="condensed">Condensed</option><option value="bold">Heavy</option>
+            <option value="auto">Theme default</option><option value="poppins">Poppins</option><option value="serif">Serif</option><option value="hand">Handwritten</option><option value="condensed">Condensed</option><option value="bold">Heavy</option><option value="mono">Typewriter</option>
           </select></div>
         <div class="field"><label for="hlLine">Highlight a line</label>
           <select id="hlLine" class="select"><option value="-1">Off</option></select>
@@ -1431,8 +1439,9 @@ const LYRIC_FONTS = {
   hand:      { id: 'hand',      label: 'Handwritten', family: "'Caveat', 'Segoe Print', 'Bradley Hand', cursive", weight: 700, k: 1.22, load: 'Caveat' },
   condensed: { id: 'condensed', label: 'Condensed',   family: "'Oswald', 'Arial Narrow', 'Roboto Condensed', sans-serif", weight: 600, k: 1.1, load: 'Oswald' },
   bold:      { id: 'bold',      label: 'Heavy',       family: "'Archivo Black', 'Arial Black', Impact, sans-serif", weight: 400, k: 0.94, load: 'Archivo Black' },
+  mono:      { id: 'mono',      label: 'Typewriter',  family: "'Courier New', ui-monospace, Menlo, Consolas, monospace", weight: 700, k: 0.9 },
 };
-const THEME_FONT = { notebook: 'hand', polaroid: 'hand', newspaper: 'serif', ticket: 'condensed', brutalism: 'bold', pixel: 'bold', y2k: 'bold' };
+const THEME_FONT = { notebook: 'hand', polaroid: 'hand', newspaper: 'serif', ticket: 'condensed', brutalism: 'bold', pixel: 'bold', y2k: 'bold', wrapped: 'bold', receipt: 'mono', gameboy: 'bold', comic: 'bold' };
 const lyricFont = () => LYRIC_FONTS[state.lyricFont === 'auto' ? (THEME_FONT[state.theme] || 'poppins') : state.lyricFont] || LYRIC_FONTS.poppins;
 const lyricFontCss = (size) => { const f = lyricFont(); return `${f.weight} ${(size * f.k).toFixed(2)}px ${f.family}`; };
 const fontAsked = new Set();
@@ -1480,15 +1489,34 @@ const THEMES = {
                  icon: '<path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h3M13 12h3M8 16h8"/>' },
   sticker: { label: 'Sticker', desc: 'Die-cut sticker with a thick white outline and a peeled corner.',
                  icon: '<path d="M5 4h14v10l-5 6H5z"/><path d="M19 14h-5v6"/>' },
+  holo: { label: 'Holo Card', desc: 'Foil trading card with a rainbow frame, dark panel and sparkles.',
+                 icon: '<path d="M12 3l2.2 5.3 5.8.5-4.4 3.8 1.4 5.6L12 15l-5 3.2 1.4-5.6L4 8.8l5.8-.5z"/>' },
+  wrapped: { label: 'Wrapped', desc: 'Bold gradient lock-screen look with big soft shapes and a home bar.',
+                 icon: '<rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M9.5 7h5M9.5 11h5"/><circle cx="12" cy="17" r="1"/>' },
+  cassette: { label: 'Cassette', desc: 'Cream tape shell with label stripes, screws and a reel window.',
+                 icon: '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="8.5" cy="12" r="2"/><circle cx="15.5" cy="12" r="2"/><path d="M8 18l1.5-3h5l1.5 3"/>' },
+  receipt: { label: 'Receipt', desc: 'Thermal paper with torn zigzag edges, dashed rules and a typewriter font.',
+                 icon: '<path d="M5 3v18l2-1.5 2 1.5 2-1.5 2 1.5 2-1.5 2 1.5V3l-2 1.5L14 3l-2 1.5L10 3 8 4.5z"/><path d="M8.5 9h7M8.5 13h5"/>' },
+  gameboy: { label: 'Gameboy', desc: 'Grey handheld shell with a dark bezel and a four-shade green LCD.',
+                 icon: '<rect x="5" y="2.5" width="14" height="19" rx="2.5"/><rect x="8" y="5.5" width="8" height="6" rx="1"/><path d="M9 16h3M10.5 14.5v3"/><circle cx="15.5" cy="16" r=".6"/>' },
+  stained: { label: 'Stained Glass', desc: 'Jewel-toned panes from your card color, set in thick black lead.',
+                 icon: '<path d="M5 21V10a7 7 0 0 1 14 0v11z"/><path d="M12 3v18M5 12h14M5 17h14"/>' },
+  neon: { label: 'Neon Sign', desc: 'Glowing glass tube on a dark brick wall, with a flickering gap.',
+                 icon: '<path d="M12 3a6 6 0 0 0-3.5 10.9V16h7v-2.1A6 6 0 0 0 12 3z"/><path d="M10 19.5h4M10.5 21.5h3"/>' },
+  comic: { label: 'Comic Panel', desc: 'Inked panel with halftone dots, a thick black frame and a starburst.',
+                 icon: '<path d="M4 5h16v11H11l-4 4v-4H4z"/><path d="M8 9h8M8 12h5"/>' },
 };
 /** Default glare per theme: matte paper and pixel themes stay matte, glossy ones shine. */
 const THEME_GLARE = { classic: 'diagonal', brutalism: 'none', cyberpunk: 'sweep', glass: 'gloss', clay: 'spotlight', neumorphism: 'spotlight',
-  vinyl: 'sweep', ticket: 'diagonal', polaroid: 'gloss', y2k: 'holo', aurora: 'spotlight', pixel: 'none', notebook: 'none', newspaper: 'none', sticker: 'gloss' };
+  vinyl: 'sweep', ticket: 'diagonal', polaroid: 'gloss', y2k: 'holo', aurora: 'spotlight', pixel: 'none', notebook: 'none', newspaper: 'none', sticker: 'gloss',
+  holo: 'holo', wrapped: 'spotlight', cassette: 'gloss', receipt: 'none', gameboy: 'diagonal', stained: 'spotlight', neon: 'sweep', comic: 'none' };
 const THEME_INSET = {
   classic: [0, 0, 0, 0], brutalism: [14, 14, 28, 28], cyberpunk: [34, 34, 34, 34],
   glass: [44, 44, 44, 44], clay: [28, 28, 60, 60], neumorphism: [40, 40, 40, 40],
   vinyl: [28, 28, 40, 44], ticket: [28, 28, 28, 44], polaroid: [32, 48, 36, 48], y2k: [30, 30, 36, 48],
   aurora: [28, 28, 28, 44], pixel: [14, 14, 28, 28], notebook: [28, 28, 28, 44], newspaper: [28, 28, 28, 44], sticker: [44, 44, 56, 60],
+  holo: [28, 28, 28, 44], wrapped: [24, 24, 32, 40], cassette: [28, 28, 28, 44], receipt: [24, 28, 24, 44],
+  gameboy: [28, 28, 36, 44], stained: [28, 28, 28, 44], neon: [34, 34, 34, 34], comic: [14, 14, 28, 28],
 };
 /** Cover art, text and logo extrude by this share of the Card Depth slider. */
 const CHILD_DEPTH_RATIO = 1;   // text, cover and logo extrude by the full Card Depth along the same vector (lower it for a shallower relief)
@@ -1918,7 +1946,7 @@ function clearShadow(g) {
   g.shadowOffsetX = g.shadowOffsetY = 0;
 }
 
-const THEME_R = { brutalism: 0, clay: 64, pixel: 0, newspaper: 6, polaroid: 10, notebook: 16, ticket: 20, sticker: 56, y2k: 80 };
+const THEME_R = { holo: 36, wrapped: 56, cassette: 22, receipt: 0, gameboy: 24, stained: 14, neon: 28, comic: 0, brutalism: 0, clay: 64, pixel: 0, newspaper: 6, polaroid: 10, notebook: 16, ticket: 20, sticker: 56, y2k: 80 };
 const themeRadius = (theme) => (theme in THEME_R ? THEME_R[theme] : RADIUS);
 
 /** Where the card sits inside the canvas for a theme (canvas px), plus its on-canvas corner radius. */
@@ -1978,6 +2006,16 @@ function getPalette(theme, bg) {
     case 'pixel':     P.surface = mixHex(bg, '#ffffff', 0.86); P.text = '#111111'; break;
     case 'notebook':  P.surface = '#FBF7EA'; P.text = '#243049'; break;
     case 'newspaper': P.surface = '#EAE5D6'; P.text = '#161616'; break;
+    case 'holo':      P.surface = mixHex(bg, '#000000', 0.82); P.text = '#FFFFFF'; break;
+    case 'cassette':  P.surface = mixHex(bg, '#F2E8D0', 0.88); P.text = '#2A2118'; break;
+    case 'receipt':   P.surface = '#FAF9F4'; P.text = '#1A1A1A'; break;
+    case 'gameboy':   P.surface = '#9BBC0F'; P.text = '#0F380F'; break;
+    case 'stained':   P.surface = mixHex(bg, '#000000', 0.5); P.text = '#FFFFFF'; break;
+    case 'comic':     P.surface = mixHex(bg, '#ffffff', 0.86); P.text = '#111111'; break;
+    case 'neon':
+      P.neon = luma(bg) < 90 ? mixHex(bg, '#ffffff', 0.55) : mixHex(bg, '#ffffff', 0.25);
+      P.text = P.neon; P.glow = bg; P.surface = '#0D0A10'; P.wall = mixHex(P.neon, '#000000', 0.62);
+      break;
     case 'clay':
       P.surface = mixHex(bg, '#ffffff', 0.5);
       P.text = luma(P.surface) > 128 ? mixHex(bg, '#000000', 0.62) : '#FFFFFF';
@@ -2016,7 +2054,7 @@ function cardFrame() {
 
 /* ---------- Cover ---------- */
 
-const COVER_RADIUS = { brutalism: 0, glass: 16, clay: 28, neumorphism: 20, vinyl: 6, ticket: 10, polaroid: 4, y2k: 30, aurora: 20, pixel: 0, notebook: 4, newspaper: 0, sticker: 20 };
+const COVER_RADIUS = { holo: 12, wrapped: 28, cassette: 6, receipt: 0, gameboy: 0, stained: 6, neon: 14, comic: 0, brutalism: 0, glass: 16, clay: 28, neumorphism: 20, vinyl: 6, ticket: 10, polaroid: 4, y2k: 30, aurora: 20, pixel: 0, notebook: 4, newspaper: 0, sticker: 20 };
 const coverRadius = () => {
   const c = state.coverShape;
   if (c === 'square') return 0;
@@ -2064,10 +2102,15 @@ function drawCover(g, P) {
   g.restore();
 
   // Borders on top of the image
-  if (th === 'brutalism') {
+  if (th === 'brutalism' || th === 'comic') {
     g.strokeStyle = '#000000'; g.lineWidth = 6;
     roundedRect(g, x + 3, y + 3, S - 6, S - 6, Math.max(0, r - 3)); g.stroke();
-  } else if (th === 'cyberpunk') {
+  } else if (th === 'gameboy') {                    // 4-shade LCD look: green multiply + dark outline
+    g.save(); roundedRect(g, x, y, S, S, r); g.clip();
+    g.globalCompositeOperation = 'multiply'; g.fillStyle = '#9BBC0F'; g.fillRect(x, y, S, S);
+    g.restore();
+    g.strokeStyle = '#0F380F'; g.lineWidth = 5; roundedRect(g, x + 2.5, y + 2.5, S - 5, S - 5, 0); g.stroke();
+  } else if (th === 'cyberpunk' || th === 'neon') {
     g.save();
     setShadow(g, state.color, 15);
     g.strokeStyle = P.neon; g.lineWidth = 2.5;
@@ -2597,7 +2640,7 @@ function paintBackdrop(g, theme, bg, P, fullBleed) {
     g.fillStyle = gl.o1;   g.fillRect(0, 0, W, H);
     g.fillStyle = gl.o2;   g.fillRect(0, 0, W, H);
   } else {
-    g.fillStyle = theme === 'cyberpunk' ? '#0a0a0a' : theme === 'neumorphism' ? P.surface : bg;
+    g.fillStyle = theme === 'cyberpunk' || theme === 'neon' ? '#0a0a0a' : theme === 'neumorphism' ? P.surface : bg;
     g.fillRect(0, 0, W, H);
   }
   g.restore();
@@ -2858,6 +2901,129 @@ function paintCardBody(g, theme, bg, P, fullBleed) {
       g.save(); setShadow(g, 'rgba(0,0,0,0.35)', 14, -4, -4);
       g.fillStyle = mixHex(bg, '#ffffff', 0.8); g.beginPath(); g.moveTo(W - f, H + 2); g.lineTo(W + 2, H - f); g.lineTo(W - f * 0.2, H - f * 0.2); g.closePath(); g.fill(); g.restore();
       g.restore(); break;
+    }
+
+    case 'holo': {
+      cardDrop(g, W, H, R, P.surface, 34, 16);
+      g.save(); roundedRect(g, 0, 0, W, H, R); g.clip();
+      const hsl = (h, a) => `hsla(${h},95%,62%,${a})`;
+      const fo = g.createLinearGradient(0, 0, W, H);
+      [0, 60, 130, 190, 250, 310, 360].forEach((h, i, a) => fo.addColorStop(i / (a.length - 1), hsl(h, 0.95)));
+      g.fillStyle = fo; g.fillRect(0, 0, W, H);                                   // rainbow foil frame
+      g.fillStyle = P.surface; roundedRect(g, 20, 20, W - 40, H - 40, Math.max(6, R - 14)); g.fill();
+      const sh = g.createLinearGradient(0, H, W, 0);
+      [0, 90, 180, 270, 330].forEach((h, i, a) => sh.addColorStop(i / (a.length - 1), hsl(h, 0.16)));
+      g.fillStyle = sh; roundedRect(g, 20, 20, W - 40, H - 40, Math.max(6, R - 14)); g.fill();   // prism sheen on the panel
+      sparkle(g, W * 0.93, H * 0.07, 20, 'rgba(255,255,255,0.9)'); sparkle(g, W * 0.87, H * 0.12, 10, 'rgba(255,255,255,0.7)'); sparkle(g, W * 0.07, H * 0.955, 14, 'rgba(255,255,255,0.8)');
+      g.restore();
+      g.strokeStyle = 'rgba(255,255,255,0.55)'; g.lineWidth = 2; roundedRect(g, 1, 1, W - 2, H - 2, R); g.stroke();
+      break;
+    }
+    case 'wrapped': {
+      cardDrop(g, W, H, R, bg, 34, 16);
+      g.save(); roundedRect(g, 0, 0, W, H, R); g.clip();
+      const wg = g.createLinearGradient(0, 0, W, H), m = Math.min(W, H);
+      wg.addColorStop(0, mixHex(bg, '#ffffff', 0.18)); wg.addColorStop(0.55, bg); wg.addColorStop(1, mixHex(bg, '#7358FF', 0.5));
+      g.fillStyle = wg; g.fillRect(0, 0, W, H);
+      g.fillStyle = 'rgba(255,255,255,0.10)'; g.beginPath(); g.arc(W * 0.92, H * 0.12, m * 0.34, 0, 7); g.fill();
+      g.fillStyle = 'rgba(0,0,0,0.10)'; g.beginPath(); g.arc(W * 0.02, H * 0.98, m * 0.42, 0, 7); g.fill();
+      g.strokeStyle = 'rgba(255,255,255,0.14)'; g.lineWidth = m * 0.05; g.beginPath(); g.arc(W * 0.8, H * 0.9, m * 0.3, 0, 7); g.stroke();
+      g.fillStyle = rgba(P.text, 0.5); roundedRect(g, W / 2 - 70, H - 20, 140, 6, 3); g.fill();   // home indicator
+      g.restore(); break;
+    }
+    case 'cassette': {
+      cardDrop(g, W, H, R, P.surface, 30, 14);
+      g.save(); roundedRect(g, 0, 0, W, H, R); g.clip();
+      [bg, mixHex(bg, '#ffffff', 0.4), mixHex(bg, '#000000', 0.3), bg].forEach((c, i) => { g.fillStyle = c; g.fillRect(0, i * 8, W, 8); });   // label stripes
+      const bh = 46;
+      g.fillStyle = mixHex(P.surface, '#000000', 0.22);                                // tape window shell
+      g.beginPath(); g.moveTo(W * 0.12, H); g.lineTo(W * 0.17, H - bh); g.lineTo(W * 0.83, H - bh); g.lineTo(W * 0.88, H); g.closePath(); g.fill();
+      g.fillStyle = rgba(P.text, 0.55); for (const x of [0.3, 0.7]) { g.beginPath(); g.arc(W * x, H - bh * 0.45, 10, 0, 7); g.fill(); }
+      g.strokeStyle = 'rgba(0,0,0,0.3)'; g.lineWidth = 2;
+      for (const [x, y] of [[24, 54], [W - 24, 54], [24, H - 24], [W - 24, H - 24]]) {   // screws
+        g.fillStyle = 'rgba(0,0,0,0.16)'; g.beginPath(); g.arc(x, y, 9, 0, 7); g.fill();
+        g.beginPath(); g.moveTo(x - 5, y - 5); g.lineTo(x + 5, y + 5); g.stroke();
+      }
+      g.restore(); break;
+    }
+    case 'receipt': {
+      const n = Math.round(W / 22), tw = W / n, tt = 10;
+      const zig = (c) => {
+        c.beginPath(); c.moveTo(0, tt);
+        for (let i = 0; i < n; i++) { c.lineTo(i * tw + tw / 2, 0); c.lineTo((i + 1) * tw, tt); }
+        c.lineTo(W, H - tt);
+        for (let i = n; i > 0; i--) { c.lineTo(i * tw - tw / 2, H); c.lineTo((i - 1) * tw, H - tt); }
+        c.closePath();
+      };
+      g.save(); setShadow(g, 'rgba(0,0,0,0.4)', 28, 0, 14); g.fillStyle = P.surface; zig(g); g.fill(); g.restore();
+      g.save(); zig(g); g.clip();
+      const sg = g.createLinearGradient(0, 0, W, 0); sg.addColorStop(0, 'rgba(0,0,0,0.05)'); sg.addColorStop(0.5, 'rgba(255,255,255,0.35)'); sg.addColorStop(1, 'rgba(0,0,0,0.05)');
+      g.fillStyle = sg; g.fillRect(0, 0, W, H);
+      g.strokeStyle = rgba(P.text, 0.4); g.lineWidth = 3; g.setLineDash([10, 8]);
+      const ry = cardFrame().ltop - LYRIC_GAP / 2; g.beginPath(); g.moveTo(PADDING, ry); g.lineTo(W - PADDING, ry); g.stroke(); g.setLineDash([]);
+      g.fillStyle = rgba(P.text, 0.5); g.font = `600 22px 'Courier New', monospace`; letterSpacing(g, 2); g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+      g.fillText('*** THANK YOU ***', W / 2, H - 30); g.textAlign = 'left'; letterSpacing(g, 0);
+      g.restore(); break;
+    }
+    case 'gameboy': {
+      cardDrop(g, W, H, R, '#C9C6BB', 30, 14);
+      g.save(); roundedRect(g, 0, 0, W, H, R); g.clip();
+      g.fillStyle = '#5B5D74'; roundedRect(g, 14, 14, W - 28, H - 28, 14); g.fill();       // bezel
+      g.fillStyle = P.surface; roundedRect(g, 30, 30, W - 60, H - 60, 6); g.fill();         // LCD
+      g.fillStyle = tilePattern('lcd', 6, (c, k) => { c.fillStyle = 'rgba(15,56,15,0.10)'; c.fillRect(0, 0, k, 1); c.fillRect(0, 0, 1, k); });
+      roundedRect(g, 30, 30, W - 60, H - 60, 6); g.fill();
+      g.fillStyle = '#D33A4A'; g.beginPath(); g.arc(22, H / 2, 3.5, 0, 7); g.fill();       // power LED
+      g.restore(); break;
+    }
+    case 'stained': {
+      cardDrop(g, W, H, R, '#0c0c10', 30, 14);
+      g.save(); roundedRect(g, 0, 0, W, H, R); g.clip();
+      const cols = 5, rows = Math.max(4, Math.round(cols * H / W)), cw = W / cols, rh = H / rows;
+      let sd = 7; const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647;       // fixed seed: same panes every frame
+      const pts = [];
+      for (let j = 0; j <= rows; j++) { pts.push([]); for (let i = 0; i <= cols; i++) { const jx = (rnd() - 0.5) * cw * 0.55, jy = (rnd() - 0.5) * rh * 0.55; pts[j].push([i * cw + (i % cols ? jx : 0), j * rh + (j % rows ? jy : 0)]); } }
+      const cs = [bg, mixHex(bg, '#E8115B', 0.5), mixHex(bg, '#F5B700', 0.55), mixHex(bg, '#1DB9D6', 0.55), mixHex(bg, '#7358FF', 0.55)];
+      const quad = (j, i) => { g.beginPath(); [pts[j][i], pts[j][i + 1], pts[j + 1][i + 1], pts[j + 1][i]].forEach((q, k) => (k ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]))); g.closePath(); };
+      for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) { g.fillStyle = mixHex(cs[Math.floor(rnd() * cs.length)], '#000000', 0.5); quad(j, i); g.fill(); }
+      const lg = g.createRadialGradient(W / 2, H * 0.4, 0, W / 2, H * 0.4, Math.max(W, H) * 0.7); lg.addColorStop(0, 'rgba(255,255,255,0.18)'); lg.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = lg; g.fillRect(0, 0, W, H);
+      g.strokeStyle = '#07070a'; g.lineWidth = 7; g.lineJoin = 'round';                   // lead lines
+      for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) { quad(j, i); g.stroke(); }
+      g.lineWidth = 18; roundedRect(g, 0, 0, W, H, R); g.stroke();
+      g.restore(); break;
+    }
+    case 'neon': {
+      cardDrop(g, W, H, R, P.surface, 30, 14);
+      g.save(); roundedRect(g, 0, 0, W, H, R); g.clip();
+      g.fillStyle = tilePattern('brick', 64, (c, k) => { c.fillStyle = 'rgba(255,255,255,0.07)'; c.fillRect(0, 0, k, 2); c.fillRect(0, k / 2, k, 2); c.fillRect(0, 0, 2, k / 2); c.fillRect(k / 2, k / 2, 2, k / 2); });
+      g.fillRect(0, 0, W, H);
+      const wg = g.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * 0.65); wg.addColorStop(0, rgba(bg, 0.2)); wg.addColorStop(1, rgba(bg, 0));
+      g.fillStyle = wg; g.fillRect(0, 0, W, H);
+      g.restore();
+      const per = 2 * (W + H), tube = (ins, lw, col, blur) => {
+        g.save(); setShadow(g, bg, blur); g.strokeStyle = col; g.lineWidth = lw; g.lineCap = 'round'; g.setLineDash([per - 70, 70]);   // the gap is the flicker
+        roundedRect(g, ins, ins, W - 2 * ins, H - 2 * ins, Math.max(6, R - ins)); g.stroke(); g.stroke(); g.restore();
+      };
+      tube(18, 7, P.neon, 26); tube(34, 3, rgba(P.neon, 0.7), 14); tube(18, 2, mixHex(P.neon, '#ffffff', 0.75), 0);
+      break;
+    }
+    case 'comic': {
+      if (D === 0) { g.fillStyle = '#111111'; g.fillRect(14, 14, W, H); }
+      g.fillStyle = P.surface; g.fillRect(0, 0, W, H);
+      g.save(); g.beginPath(); g.rect(0, 0, W, H); g.clip();
+      g.fillStyle = mixHex(bg, '#ffffff', 0.15); g.beginPath();
+      const reach = Math.min(W, H) * 0.9, st = 26;
+      for (let y = 0; y < H; y += st) for (let x = 0; x < W; x += st) {                  // Ben-Day dots fade out from the bottom-right corner
+        const d = Math.hypot(W - x, H - y) / reach; if (d >= 1) continue;
+        const rr = 9 * (1 - d); g.moveTo(x + rr, y); g.arc(x, y, rr, 0, 7);
+      }
+      g.fill();
+      g.fillStyle = '#FFD60A'; g.strokeStyle = '#111111'; g.lineWidth = 5; g.lineJoin = 'miter'; g.beginPath();
+      for (let i = 0; i < 24; i++) { const a = i * Math.PI / 12, r = i % 2 ? 24 : 46; g[i ? 'lineTo' : 'moveTo'](W - 34 + Math.cos(a) * r, 34 + Math.sin(a) * r); }
+      g.closePath(); g.fill(); g.stroke();
+      g.restore();
+      g.strokeStyle = '#111111'; g.lineWidth = 10; g.strokeRect(5, 5, W - 10, H - 10);
+      break;
     }
 
     default: {                                       // classic: metallic on Wide, flat on Square
@@ -5125,10 +5291,21 @@ $('hideBox').addEventListener('change', (e) => {
     try { ev.prompt(); await ev.userChoice; } catch (err) { /* dismissed or blocked */ }
   });
   window.addEventListener('appinstalled', () => { deferred = null; inst.hidden = true; toast('App installed'); });
+  // Safari never fires beforeinstallprompt: show the button anyway and explain the manual steps
+  const ua = navigator.userAgent, ios = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const macSafari = !ios && /safari/i.test(ua) && !/chrome|chromium|crios|fxios|android/i.test(ua);
+  if ((ios || macSafari) && !standalone()) {
+    inst.hidden = false;
+    inst.addEventListener('click', () => toast(ios ? 'Tap the Share button, then "Add to Home Screen".' : 'In Safari choose File, then "Add to Dock".'));
+  }
 
   // Service worker: needs a real file on http(s) (or localhost); silently skipped on file:// or when sw.js is missing
   if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
-    const reg = () => { try { navigator.serviceWorker.register('sw.js').catch(() => {}); } catch (e) { /* ignore */ } };
+    const reg = () => { try { const first = !navigator.serviceWorker.controller;   // true only on the very first visit
+      navigator.serviceWorker.register('sw.js').then((r) => {
+        const w = r.installing;
+        if (first && w) w.addEventListener('statechange', () => { if (w.state === 'activated') toast('Ready to use offline'); });
+      }).catch(() => {}); } catch (e) { /* ignore */ } };
     if (document.readyState === 'complete') reg(); else window.addEventListener('load', reg);
   }
 }
